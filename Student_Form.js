@@ -1,84 +1,235 @@
-<!--Student Student_Form.html-->
+// Student_Form.js - GitHub Pages Version
+// ⚠️ IMPORTANT: Set your backend URL below!
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Concern Form</title>
-  <link rel="stylesheet" href="Student_Form.css">
-</head>
-<body>
-  <!-- Instructions Screen -->
-  <div class="instructions-container" id="instructionsScreen">
-    <h2>📋 Student Concern Form - Instructions</h2>
-    <div class="instructions-content">
-      <p>Welcome to the Student Concern Form. This is a safe space for you to share any concerns, issues, or situations you need guidance with.</p>
+// ========================================
+// CONFIGURATION - UPDATE THIS!
+// ========================================
+const BACKEND_URL = 'https://studentreferralforms.onrender.com'; 
+// ☝️ Replace with your hosted backend URL, examples:
+// 'https://your-app.herokuapp.com'
+// 'https://your-app.onrender.com'
+// 'https://your-app.railway.app'
+// ========================================
+
+// Proceed from Instructions to Form
+document.getElementById('proceedBtn').addEventListener('click', () => {
+  document.getElementById('instructionsScreen').style.display = 'none';
+  document.getElementById('formScreen').style.display = 'block';
+});
+
+// Back to Instructions from Form
+document.getElementById('backToInstructionsBtn').addEventListener('click', () => {
+  document.getElementById('formScreen').style.display = 'none';
+  document.getElementById('instructionsScreen').style.display = 'block';
+});
+
+// Submit Another Concern - Reset to Form
+document.getElementById('submitAnotherBtn').addEventListener('click', () => {
+  document.getElementById('confirmationScreen').style.display = 'none';
+  document.getElementById('formScreen').style.display = 'block';
+  document.getElementById('complaintForm').reset();
+  document.getElementById('nameInputGroup').style.display = 'none';
+});
+
+// ==================== Name Option Handling ====================
+
+document.getElementById('nameOption').addEventListener('change', function() {
+  const nameInputGroup = document.getElementById('nameInputGroup');
+  const studentNameInput = document.getElementById('studentName');
+  const nameLabel = document.getElementById('nameLabel');
+  const selectedOption = this.value;
+  
+  if (selectedOption === 'realName') {
+    nameInputGroup.style.display = 'block';
+    nameLabel.textContent = 'Your Name';
+    studentNameInput.placeholder = 'Enter your full name';
+    studentNameInput.required = true;
+    studentNameInput.value = '';
+  } else if (selectedOption === 'anonymous') {
+    nameInputGroup.style.display = 'block';
+    nameLabel.textContent = 'Anonymous Name (Optional)';
+    studentNameInput.placeholder = 'e.g., Worried Student, Student123, etc.';
+    studentNameInput.required = false;
+    studentNameInput.value = '';
+  } else if (selectedOption === 'preferNot') {
+    nameInputGroup.style.display = 'none';
+    studentNameInput.required = false;
+    studentNameInput.value = 'Anonymous';
+  }
+});
+
+// ==================== Form Submission ====================
+
+document.getElementById('complaintForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = 'Submitting...';
+  submitBtn.disabled = true;
+
+  try {
+    // Get form data
+    const nameOption = document.getElementById('nameOption').value;
+    let studentName = 'Anonymous';
+    
+    if (nameOption === 'realName') {
+      studentName = document.getElementById('studentName').value.trim();
+      if (!studentName) {
+        showError('Please enter your name');
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        return;
+      }
+    } else if (nameOption === 'anonymous') {
+      const anonymousName = document.getElementById('studentName').value.trim();
+      studentName = anonymousName || 'Anonymous';
+    } else if (nameOption === 'preferNot') {
+      studentName = 'Prefer not to say';
+    }
+
+    const concern = document.getElementById('concern').value.trim();
+    
+    if (!concern) {
+      showError('Please describe your concern');
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+      return;
+    }
+
+    // Prepare form data
+    const formData = {
+      studentName: studentName,
+      concern: concern,
+      nameOption: nameOption
+    };
+
+    console.log("📝 Submitting to:", `${BACKEND_URL}/api/public-referrals`);
+    console.log("📝 Form data:", formData);
       
-      <h3>📌 Before You Begin:</h3>
-      <ul>
-        <li><strong>Your Privacy Matters:</strong> You can choose to remain anonymous or use a preferred name.</li>
-        <li><strong>Be Honest:</strong> Please describe your concern clearly so we can provide the best support.</li>
-        <li><strong>Keep Your Reference Number:</strong> After submitting, you'll receive a Referral ID. Save this number to track your concern.</li>
-        <li><strong>Confidential:</strong> All submissions are treated with care and confidentiality.</li>
-      </ul>
+    // Submit to backend
+    const fetchResponse = await fetch(`${BACKEND_URL}/api/public-referrals`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    });
+    
+    const data = await fetchResponse.json();
+    console.log("📥 Server response:", data);
 
-      <div class="important-note">
-        <strong>⚠️ Important:</strong> Go to the Guidance Office within 3 days after submitting concern, it might be automatically remove in counselor system. If you're experiencing an emergency or immediate danger, please contact your teacher, school counselor, or guardian right away.
-      </div>
-
-      <button type="button" id="proceedBtn" class="proceed-btn">I Understand - Proceed to Form</button>
-    </div>
-  </div>
-
-  <!-- Main Form -->
-  <div class="form-container" id="formScreen" style="display: none;">
-    <button type="button" id="backToInstructionsBtn" class="back-btn">← Back to Instructions</button>
-    <h2>Student Concern Form</h2>
-    <form id="complaintForm">
-
-      <div class="form-group">
-        <label for="nameOption">How would you like to identify yourself?</label>
-        <select id="nameOption" name="nameOption" required>
-          <option value="" disabled selected>Choose an option</option>
-          <option value="realName">Use my real name</option>
-          <option value="preferNot">Prefer not to say</option>
-          <option value="anonymous">Use an anonymous name</option>
-        </select>
-      </div>
-
-      <div class="form-group" id="nameInputGroup" style="display: none;">
-        <label for="studentName" id="nameLabel">Your Name</label>
-        <input type="text" id="studentName" name="studentName" placeholder="Enter your name">
-      </div>
-
-      <div class="form-group">
-        <label for="concern">Your Concern</label>
-        <textarea id="concern" name="concern" rows="6" placeholder="Please describe your concern, issue, or situation in detail. The more information you provide, the better we can help you..." required></textarea>
-      </div>
-
-      <button type="submit">Submit Concern</button>
-    </form>
-  </div>
-
-  <!-- Confirmation Screen -->
-  <div class="confirmation-container" id="confirmationScreen" style="display: none;">
-    <div class="confirmation-content">
-      <div class="success-icon">✓</div>
-      <h2>Concern Submitted Successfully!</h2>
-      <p>Thank you for reaching out. Your concern has been received and will be reviewed by our support team.</p>
+    if (fetchResponse.ok && data.success) {
+      // Extract referral ID
+      const referralId = data.data?.referralId || data.referralId || 'N/A';
       
-      <div class="referral-box">
-        <label>Your Referral ID:</label>
-        <div class="referral-id" id="displayReferralId"></div>
-        <p class="referral-note">📌 Please save this number. You can use it to check the status of your concern.</p>
-      </div>
+      console.log("✅ Success! Referral ID:", referralId);
+      
+      showConfirmation(referralId);
+      
+      // Reset form
+      document.getElementById('complaintForm').reset();
+      document.getElementById('nameInputGroup').style.display = 'none';
+    } else {
+      const errorMessage = data.error || data.message || 'Failed to submit concern';
+      console.error('❌ Submission failed:', errorMessage);
+      showError(errorMessage);
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+    }
+  } catch (error) {
+    console.error('❌ Error:', error);
+    
+    let errorMessage = 'Network error. Please check your connection and try again.';
+    
+    if (error.message) {
+      errorMessage = `Error: ${error.message}`;
+    }
+    
+    if (error.message.includes('fetch')) {
+      errorMessage = `Cannot connect to server at ${BACKEND_URL}. Please make sure your backend is running and BACKEND_URL is correct.`;
+    }
+    
+    showError(errorMessage);
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+  }
+});
 
-      <button type="button" id="submitAnotherBtn" class="secondary-btn">Submit Another Concern</button>
-    </div>
-  </div>
+// ==================== Show Confirmation ====================
 
-  <!-- Scripts for GitHub Pages - No api-client needed -->
-  <script src="Student_Form.js"></script>
-</body>
-</html>
+function showConfirmation(referralId) {
+  document.getElementById('formScreen').style.display = 'none';
+  document.getElementById('confirmationScreen').style.display = 'block';
+  
+  document.getElementById('displayReferralId').textContent = referralId;
+  
+  const submitBtn = document.querySelector('#complaintForm button[type="submit"]');
+  submitBtn.textContent = 'Submit Concern';
+  submitBtn.disabled = false;
+  
+  console.log("✅ Confirmation shown with ID:", referralId);
+}
+
+// ==================== Show Error ====================
+
+function showError(message) {
+  console.error("⚠️ Error:", message);
+  
+  let errorDiv = document.getElementById('errorAlert');
+  
+  if (!errorDiv) {
+    errorDiv = document.createElement('div');
+    errorDiv.id = 'errorAlert';
+    errorDiv.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #fee;
+      color: #c33;
+      padding: 15px 20px;
+      border-radius: 8px;
+      border-left: 4px solid #c33;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 10000;
+      max-width: 400px;
+      animation: slideIn 0.3s ease-out;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    `;
+    document.body.appendChild(errorDiv);
+  }
+  
+  errorDiv.textContent = message;
+  errorDiv.style.display = 'block';
+  
+  setTimeout(() => {
+    errorDiv.style.display = 'none';
+  }, 7000);
+}
+
+// CSS animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+`;
+document.head.appendChild(style);
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("✅ Student Form initialized (GitHub Pages version)");
+  console.log("📡 Backend URL:", BACKEND_URL);
+  
+  if (BACKEND_URL === 'http://localhost:3000') {
+    console.warn("⚠️ WARNING: Using localhost backend URL. Update BACKEND_URL constant for production!");
+  }
+});
