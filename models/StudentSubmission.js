@@ -38,7 +38,6 @@ const studentSubmissionSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Auto-generate submissionId before saving
 studentSubmissionSchema.pre('save', async function(next) {
   if (!this.submissionId) {
     const date = new Date();
@@ -47,7 +46,6 @@ studentSubmissionSchema.pre('save', async function(next) {
     const day = String(date.getDate()).padStart(2, '0');
     const dateStr = `${year}${month}${day}`;
     
-    // Find the last submission for today
     const lastSubmission = await this.constructor
       .findOne({ submissionId: new RegExp(`^SUB-${dateStr}`) })
       .sort({ submissionId: -1 });
@@ -64,3 +62,4 @@ studentSubmissionSchema.pre('save', async function(next) {
 });
 
 module.exports = mongoose.model('StudentSubmission', studentSubmissionSchema);
+
