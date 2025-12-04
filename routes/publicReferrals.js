@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const StudentSubmission = require("../models/StudentSubmission");
+const mongoose = require("mongoose");
+const Referral = require("../models/Referral");
 
 // PUBLIC ROUTE - Student Form Submission (No Auth Required)
-// This matches the frontend calling /api/public-referrals
 router.post("/", async (req, res) => {
   try {
     console.log("📥 Received student concern:", req.body);
@@ -18,61 +18,41 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Generate unique submission ID
-    const today = new Date();
-    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-    
-    // Find the highest existing submission number for today
-    const todayPattern = new RegExp(`^SUB-${dateStr}-`);
-    const existingSubmissions = await StudentSubmission.find({
-      submissionId: todayPattern
-    }).sort({ submissionId: -1 }).limit(1);
-    
-    let nextNumber = 1;
-    if (existingSubmissions.length > 0) {
-      const lastId = existingSubmissions[0].submissionId;
-      const lastNumber = parseInt(lastId.split('-')[2]);
-      nextNumber = lastNumber + 1;
-    }
-    
-    const submissionId = `SUB-${dateStr}-${String(nextNumber).padStart(3, '0')}`;
-
-    // Create new student submission
-    const submission = new StudentSubmission({
-      submissionId,
+    // Create new referral from student submission
+    // Using default values for required fields - counselor will update these
+    const newReferral = new Referral({
       studentName: studentName || 'Anonymous',
-      concern: concern.trim(),
-      nameOption: nameOption || 'preferNot',
-      status: 'Pending'
+      studentId: 'PENDING',
+      level: 'JHS', // Default value - counselor must update
+      grade: 'TBD', // Default value - counselor must update
+      referralDate: new Date(),
+      reason: concern,
+      description: concern,
+      severity: 'Medium',
+      status: 'Pending',
+      studentNameOption: nameOption || 'preferNot',
+      createdBy: new mongoose.Types.ObjectId('000000000000000000000000'), // System placeholder
+      referredBy: 'Student Self-Report'
     });
 
-    await submission.save();
+    const savedReferral = await newReferral.save();
     
-    console.log("✅ Student concern submitted:", submission.submissionId);
+    console.log("✅ Student concern submitted:", savedReferral.referralId);
     
     res.status(201).json({
       success: true,
       message: 'Concern submitted successfully',
       data: {
-        referralId: submission.submissionId  // Frontend expects "referralId"
+        referralId: savedReferral.referralId
       }
     });
 
   } catch (error) {
     console.error("❌ Error submitting student concern:", error);
-    
-    // Handle duplicate key error
-    if (error.code === 11000) {
-      return res.status(500).json({
-        success: false,
-        error: 'Duplicate submission. Please try again.'
-      });
-    }
-    
     res.status(500).json({
       success: false,
       error: 'Server error. Please try again later.',
-      details: error.message
+      details: error.message // Added for debugging
     });
   }
 });
