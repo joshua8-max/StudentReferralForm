@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 const Referral = require("../models/Referral");
 
 // PUBLIC ROUTE - Student Form Submission (No Auth Required)
-// TEMPORARY: Using Referral model until StudentSubmission is fixed
 router.post("/", async (req, res) => {
   try {
     console.log("📥 Received student concern:", req.body);
@@ -19,16 +19,14 @@ router.post("/", async (req, res) => {
     }
 
     // Create new referral from student submission
-    const mongoose = require('mongoose');
-    
     const newReferral = new Referral({
       studentName: studentName || 'Anonymous',
       studentId: 'PENDING',
       level: 'N/A',
       grade: 'N/A',
       referralDate: new Date(),
-      reason: concern,
-      description: concern,
+      reason: concern.trim(),
+      description: concern.trim(),
       severity: 'Medium',
       status: 'Pending',
       studentNameOption: nameOption || 'preferNot',
@@ -44,7 +42,7 @@ router.post("/", async (req, res) => {
       success: true,
       message: 'Concern submitted successfully',
       data: {
-        referralId: savedReferral.referralId  // Returns REF-xxx format
+        referralId: savedReferral.referralId
       }
     });
 
