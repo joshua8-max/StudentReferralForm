@@ -1,50 +1,56 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 const Referral = require("../models/Referral");
 
-// PUBLIC ROUTE - Student Form Submission
+// PUBLIC ROUTE - Student Form Submission (No Auth Required)
 router.post("/", async (req, res) => {
   try {
-    console.log("📥 Received:", req.body);
+    console.log("📥 Received student concern:", req.body);
 
     const { studentName, concern, nameOption } = req.body;
 
-    if (!concern || !concern.trim()) {
+    // Validate input
+    if (!concern || concern.trim() === '') {
       return res.status(400).json({ 
         success: false, 
         error: 'Concern is required' 
       });
     }
 
-    // Simple referral creation
-    const referral = new Referral({
+    // Create new referral from student submission
+    // Using valid enum values: "JHS" for level (required by model)
+    const newReferral = new Referral({
       studentName: studentName || 'Anonymous',
       studentId: 'PENDING',
-      level: 'N/A',
-      grade: 'N/A', 
+      level: 'JHS',  // ✅ Valid enum value (Elementary, JHS, or SHS)
+      grade: 'To Be Determined',  // ✅ Valid string (no enum restriction on grade)
       referralDate: new Date(),
       reason: concern.trim(),
       description: concern.trim(),
       severity: 'Medium',
       status: 'Pending',
-      referredBy: 'Student Self-Report'
+      referredBy: 'Student Self-Report',
+      createdBy: new mongoose.Types.ObjectId('000000000000000000000000')
     });
 
-    const saved = await referral.save();
+    const savedReferral = await newReferral.save();
     
-    console.log("✅ Saved:", saved.referralId);
+    console.log("✅ Student concern submitted:", savedReferral.referralId);
     
     res.status(201).json({
       success: true,
-      message: 'Success',
-      data: { referralId: saved.referralId }
+      message: 'Concern submitted successfully',
+      data: {
+        referralId: savedReferral.referralId
+      }
     });
 
   } catch (error) {
-    console.error("❌ Error:", error.message);
+    console.error("❌ Error submitting student concern:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error',
+      error: 'Server error. Please try again later.',
       details: error.message
     });
   }
