@@ -1,56 +1,50 @@
 const express = require("express");
 const router = express.Router();
-const mongoose = require("mongoose");
 const Referral = require("../models/Referral");
 
-// PUBLIC ROUTE - Student Form Submission (No Auth Required)
+// PUBLIC ROUTE - Student Form Submission
 router.post("/", async (req, res) => {
   try {
-    console.log("📥 Received student concern:", req.body);
+    console.log("📥 Received:", req.body);
 
     const { studentName, concern, nameOption } = req.body;
 
-    // Validate input
-    if (!concern || concern.trim() === '') {
+    if (!concern || !concern.trim()) {
       return res.status(400).json({ 
         success: false, 
         error: 'Concern is required' 
       });
     }
 
-    // Create new referral from student submission
-    const newReferral = new Referral({
+    // Simple referral creation
+    const referral = new Referral({
       studentName: studentName || 'Anonymous',
       studentId: 'PENDING',
       level: 'N/A',
-      grade: 'N/A',
+      grade: 'N/A', 
       referralDate: new Date(),
       reason: concern.trim(),
       description: concern.trim(),
       severity: 'Medium',
       status: 'Pending',
-      studentNameOption: nameOption || 'preferNot',
-      createdBy: new mongoose.Types.ObjectId('000000000000000000000000'),
       referredBy: 'Student Self-Report'
     });
 
-    const savedReferral = await newReferral.save();
+    const saved = await referral.save();
     
-    console.log("✅ Student concern submitted:", savedReferral.referralId);
+    console.log("✅ Saved:", saved.referralId);
     
     res.status(201).json({
       success: true,
-      message: 'Concern submitted successfully',
-      data: {
-        referralId: savedReferral.referralId
-      }
+      message: 'Success',
+      data: { referralId: saved.referralId }
     });
 
   } catch (error) {
-    console.error("❌ Error submitting student concern:", error);
+    console.error("❌ Error:", error.message);
     res.status(500).json({
       success: false,
-      error: 'Server error. Please try again later.',
+      error: 'Server error',
       details: error.message
     });
   }
