@@ -19,6 +19,8 @@ router.post("/", async (req, res) => {
     }
 
     // Create new referral from student submission
+    const mongoose = require('mongoose');
+    
     const newReferral = new Referral({
       studentName: studentName || 'Anonymous',
       studentId: 'PENDING',
@@ -30,7 +32,7 @@ router.post("/", async (req, res) => {
       severity: 'Medium',
       status: 'Pending',
       studentNameOption: nameOption || 'preferNot',
-      createdBy: require('mongoose').Types.ObjectId('000000000000000000000000'),
+      createdBy: new mongoose.Types.ObjectId('000000000000000000000000'),
       referredBy: 'Student Self-Report'
     });
 
