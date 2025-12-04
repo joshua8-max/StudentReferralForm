@@ -1,8 +1,8 @@
 // ============================================
-// COMPLETE API-CLIENT.JS - With Student Submissions + All Endpoints
+// COMPLETE API-CLIENT.JS - PRODUCTION VERSION
 // ============================================
 
-const API_BASE_URL = "http://localhost:3000/api";
+const API_BASE_URL = "https://studentreferralforms.onrender.com/api";  // ✅ FIXED!
 
 class APIClient {
   constructor() {
@@ -194,81 +194,44 @@ class APIClient {
   // STUDENT SUBMISSION ENDPOINTS
   // ============================================
   
-  /**
-   * Submit a student concern (PUBLIC - no auth required)
-   * @param {Object} data - {studentName, concern, nameOption}
-   * @returns {Promise} Response with submissionId (format: SUB-YYYYMMDD-###)
-   */
   async submitStudentConcern(data) {
     console.log("📝 Submitting student concern...");
     return this.post("/student-submissions/submit", data);
   }
   
-  /**
-   * Get all student submissions (Counselor/Admin only)
-   * @param {Object} filters - {status, severity}
-   * @returns {Promise} List of submissions
-   */
   async getStudentSubmissions(filters = {}) {
     console.log("📋 Fetching student submissions...");
     const q = new URLSearchParams(filters).toString();
     return this.get(q ? `/student-submissions?${q}` : "/student-submissions");
   }
   
-  /**
-   * Get single student submission by ID (Counselor/Admin only)
-   * @param {string} id - Submission ID
-   * @returns {Promise} Submission details
-   */
   async getStudentSubmission(id) {
     console.log("📋 Fetching student submission:", id);
     return this.get(`/student-submissions/${id}`);
   }
   
-  /**
-   * Update student submission status/notes (Counselor/Admin only)
-   * @param {string} id - Submission ID
-   * @param {Object} data - {studentId, studentName, level, grade, status, severity, notes}
-   * @returns {Promise} Updated submission
-   */
   async updateStudentSubmission(id, data) {
     console.log("✏️ Updating student submission:", id);
     return this.put(`/student-submissions/${id}`, data);
   }
   
-  /**
-   * Process student submission into official referral (Counselor/Admin only)
-   * This is the KEY method - converts submission to official referral
-   * @param {string} id - Submission ID
-   * @param {Object} data - {studentId, level, grade, severity, category, notes, referredBy}
-   * @returns {Promise} {submission, referral} - Both records returned
-   */
   async processStudentSubmission(id, data) {
     console.log("🔄 Processing student submission:", id, "→ Creating official referral");
     return this.post(`/student-submissions/${id}/process`, data);
   }
   
-  /**
-   * Delete student submission (Admin only)
-   * @param {string} id - Submission ID
-   * @returns {Promise} Success message
-   */
   async deleteStudentSubmission(id) {
     console.log("🗑️ Deleting student submission:", id);
     return this.delete(`/student-submissions/${id}`);
   }
   
-  /**
-   * Get student submissions statistics (Counselor/Admin only)
-   * @returns {Promise} Statistics object with counts
-   */
   async getStudentSubmissionStats() {
     console.log("📊 Fetching student submission stats...");
     return this.get("/student-submissions/stats/summary");
   }
   
   // ============================================
-  // REFERRAL ENDPOINTS (STAFF REFERRALS ONLY)
+  // REFERRAL ENDPOINTS
   // ============================================
   
   async getReferrals(filters = {}) { 
@@ -329,12 +292,6 @@ class APIClient {
     return this.get("/students/stats/overview"); 
   }
 
-  /**
-   * 🆕 Search students for autocomplete (NEW METHOD)
-   * Used for auto-filling student information in submission forms
-   * @param {string} query - Search query (student ID or name)
-   * @returns {Promise} List of matching students with {_id, studentId, name, level, grade}
-   */
   async searchStudents(query) {
     console.log("🔍 Searching students:", query);
     if (!query || query.length < 2) {
