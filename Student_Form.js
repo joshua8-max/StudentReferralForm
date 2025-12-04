@@ -2,7 +2,7 @@
 // ⚠️ IMPORTANT: Set your backend URL below!
 
 // ========================================
-// CONFIGURATION - UPDATE THIS!
+// CONFIGURATION - PRODUCTION
 // ========================================
 const BACKEND_URL = 'https://studentreferralforms.onrender.com'; 
 // ☝️ Replace with your hosted backend URL, examples:
